@@ -65,8 +65,8 @@ impl Piece for  SShape {
        false
     }
     fn shuffle(&mut self) {
-         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.bottom_left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.bottom_left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.bottom_left_x;
          let y = self.bottom_left_y;
          self.reposition(x,y);
@@ -75,14 +75,14 @@ impl Piece for  SShape {
     fn new(x:i32, y:i32) -> SShape {
         let bottom_left_x = x;
         let bottom_left_y = y;
-        let bottom_right_x = bottom_left_x + 100;
+        let bottom_right_x = bottom_left_x + DIMENSION;
         let bottom_right_y = bottom_left_y;
 
         let top_left_x = bottom_left_x;
-        let top_left_y = bottom_left_y - 100;
+        let top_left_y = bottom_left_y - DIMENSION;
 
-        let top_right_x = bottom_left_x + 100;
-        let top_right_y= bottom_left_y - 100;
+        let top_right_x = bottom_left_x + DIMENSION;
+        let top_right_y= bottom_left_y - DIMENSION;
 
         SShape {
             is_dragging: false,
@@ -117,12 +117,12 @@ impl Piece for  SShape {
     }
 
     fn reposition(&mut self, x:i32, y: i32) {
-        self.bottom_right_x = x + 100;
+        self.bottom_right_x = x + DIMENSION;
         self.bottom_right_y = y;
         self.top_left_x = x;
-        self.top_left_y = y - 100;
-        self.top_right_x = x + 100;
-        self.top_right_y = y - 100;
+        self.top_left_y = y - DIMENSION;
+        self.top_right_x = x + DIMENSION;
+        self.top_right_y = y - DIMENSION;
     }
 
     fn handle_events(&mut self, event: &Event) {
@@ -190,8 +190,8 @@ impl  Piece for UShape {
        false
     }
     fn shuffle(&mut self) {
-         self.left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.left_x;
          let y = self.left_y;
          self.reposition(x,y);
@@ -199,7 +199,7 @@ impl  Piece for UShape {
     fn new(x: i32, y: i32) -> UShape {
         let left_x = x;
         let left_y = y;
-        let right_x = left_x + 100;
+        let right_x = left_x + DIMENSION;
         let right_y = left_y;
 
         UShape {
@@ -229,7 +229,7 @@ impl  Piece for UShape {
     }
 
     fn reposition(&mut self, x: i32, y: i32) {
-            self.right_x = x + 100;
+            self.right_x = x + DIMENSION;
             self.right_y = y;
     }
 
@@ -296,8 +296,8 @@ impl  Piece for IShape {
        false
     }
     fn shuffle(&mut self) {
-         self.left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.left_x;
          let y = self.left_y;
          self.reposition(x,y);
@@ -306,7 +306,7 @@ impl  Piece for IShape {
         let left_x = x;
         let left_y = y;
         let top_x = left_x ;
-        let top_y = left_y - 100;
+        let top_y = left_y - DIMENSION;
 
         IShape {
             is_dragging: false,
@@ -336,7 +336,7 @@ impl  Piece for IShape {
 
     fn reposition(&mut self, x: i32, y: i32) {
         self.top_x = x;
-        self.top_y = y + 100;
+        self.top_y = y + DIMENSION;
     }
 
     fn handle_events(&mut self, event: &Event) {
@@ -410,8 +410,8 @@ impl Piece for GShape {
        false
     }
     fn shuffle(&mut self) {
-         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.bottom_left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.bottom_left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.bottom_left_x;
          let y = self.bottom_left_y;
          self.reposition(x,y);
@@ -420,11 +420,11 @@ impl Piece for GShape {
         let bottom_left_x = x;
         let bottom_left_y = y;
         let bottom_right_x = bottom_left_x;
-        let bottom_right_y = bottom_left_y - 100;
+        let bottom_right_y = bottom_left_y - DIMENSION;
         let top_left_x = bottom_left_x;
-        let top_left_y = bottom_left_y - 200;
-        let top_right_x = bottom_left_x - 100;
-        let top_right_y = bottom_left_y - 200;
+        let top_left_y = bottom_left_y - (2*DIMENSION);
+        let top_right_x = bottom_left_x - DIMENSION;
+        let top_right_y = bottom_left_y - (2*DIMENSION);
 
         GShape {
             is_dragging: false,
@@ -459,12 +459,12 @@ impl Piece for GShape {
     }
 
     fn reposition(&mut self, x: i32, y: i32) {
-            self.bottom_right_x= x;
-            self.bottom_right_y= y -100;
-            self.top_left_x= x;
-            self.top_left_y= y - 200;
-            self.top_right_x= x - 100;
-            self.top_right_y= y - 200;
+            self.bottom_right_x = x;
+            self.bottom_right_y = y -DIMENSION;
+            self.top_left_x = x;
+            self.top_left_y = y - (2*DIMENSION);
+            self.top_right_x = x - DIMENSION;
+            self.top_right_y = y - (2*DIMENSION);
     }
 
     fn handle_events(&mut self, event: &Event) {
@@ -543,8 +543,8 @@ impl Piece for FShape {
        false
     }
     fn shuffle(&mut self) {
-         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.bottom_left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.bottom_left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.bottom_left_x;
          let y = self.bottom_left_y;
          self.reposition(x,y);
@@ -553,17 +553,17 @@ impl Piece for FShape {
 
         let bottom_left_x = x;
         let bottom_left_y = y;
-        let bottom_right_x = bottom_left_x + 100;
+        let bottom_right_x = bottom_left_x + DIMENSION;
         let bottom_right_y = bottom_left_y;
 
         let top_left_x = bottom_left_x;
-        let top_left_y = bottom_left_y - 100;
+        let top_left_y = bottom_left_y - DIMENSION;
 
-        let top_right_x = bottom_left_x + 100;
-        let top_right_y = bottom_left_y - 100;
+        let top_right_x = bottom_left_x + DIMENSION;
+        let top_right_y = bottom_left_y - DIMENSION;
 
         let top_top_left_x = bottom_left_x;
-        let top_top_left_y = bottom_left_y - 200;
+        let top_top_left_y = bottom_left_y - (2*DIMENSION);
 
         FShape {
             is_dragging: false,
@@ -601,14 +601,14 @@ impl Piece for FShape {
     }
 
     fn reposition(&mut self, x: i32, y: i32) {
-        self.bottom_right_x = x + 100;
+        self.bottom_right_x = x + DIMENSION;
         self.bottom_right_y = y;
         self.top_left_x = x;
-        self.top_left_y = y - 100;
-        self.top_right_x = x + 100;
-        self.top_right_y = y - 100;
+        self.top_left_y = y - DIMENSION;
+        self.top_right_x = x + DIMENSION;
+        self.top_right_y = y - DIMENSION;
         self.top_top_left_x = x;
-        self.top_top_left_y = y - 200;
+        self.top_top_left_y = y - (2*DIMENSION);
     }
 
     fn handle_events(&mut self, event: &Event) {
@@ -685,8 +685,8 @@ impl Piece for LShape {
        false
     }
     fn shuffle(&mut self) {
-         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.bottom_left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.bottom_left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.bottom_left_x;
          let y = self.bottom_left_y;
          self.reposition(x,y);
@@ -694,14 +694,14 @@ impl Piece for LShape {
     fn new(x:i32, y: i32) -> LShape {
         let bottom_left_x = x;
         let bottom_left_y = y;
-        let bottom_right_x = bottom_left_x + 100;
+        let bottom_right_x = bottom_left_x + DIMENSION;
         let bottom_right_y = bottom_left_y;
 
-        let top_left_x = bottom_left_x + 200;
+        let top_left_x = bottom_left_x + (2*DIMENSION);
         let top_left_y = bottom_left_y;
 
-        let top_right_x = bottom_left_x + 200;
-        let top_right_y = bottom_left_y - 100;
+        let top_right_x = bottom_left_x + (2*DIMENSION);
+        let top_right_y = bottom_left_y - DIMENSION;
 
         LShape {
             is_dragging: false,
@@ -736,14 +736,14 @@ impl Piece for LShape {
     }
 
     fn reposition(&mut self, x: i32, y: i32) {
-        self.bottom_right_x = x + 100;
+        self.bottom_right_x = x + DIMENSION;
         self.bottom_right_y = y;
 
-        self.top_left_x = x + 200;
+        self.top_left_x = x + (2*DIMENSION);
         self.top_left_y = y;
 
-        self.top_right_x = x + 200;
-        self.top_right_y = y-100;
+        self.top_right_x = x + (2*DIMENSION);
+        self.top_right_y = y - DIMENSION;
     }
 
     fn handle_events(&mut self, event: &Event) {
@@ -818,8 +818,8 @@ impl  Piece for RShape {
        false
     }
     fn shuffle(&mut self) {
-         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - 200);
-         self.bottom_left_y = rand::thread_rng().gen_range(100, HEIGHT as i32 - 200);
+         self.bottom_left_x = rand::thread_rng().gen_range(700, WIDTH as i32 - (2*DIMENSION));
+         self.bottom_left_y = rand::thread_rng().gen_range(DIMENSION, HEIGHT as i32 - (2*DIMENSION));
          let x = self.bottom_left_x;
          let y = self.bottom_left_y;
          self.reposition(x,y);
@@ -827,14 +827,14 @@ impl  Piece for RShape {
     fn new(x:i32, y: i32) -> RShape {
         let bottom_left_x = x;
         let bottom_left_y = y;
-        let bottom_right_x = bottom_left_x + 100;
+        let bottom_right_x = bottom_left_x + DIMENSION;
         let bottom_right_y = bottom_left_y;
 
-        let top_left_x = bottom_left_x + 200;
+        let top_left_x = bottom_left_x + (2*DIMENSION);
         let top_left_y = bottom_left_y;
 
         let top_right_x = bottom_left_x;
-        let top_right_y = bottom_left_y + 100;
+        let top_right_y = bottom_left_y + DIMENSION;
 
         RShape {
             is_dragging: false,
@@ -869,12 +869,12 @@ impl  Piece for RShape {
     }
 
     fn reposition(&mut self, x: i32, y: i32) {
-        self.bottom_right_x = x + 100;
+        self.bottom_right_x = x + DIMENSION;
         self.bottom_right_y = y;
-        self.top_left_x = x + 200;
+        self.top_left_x = x + (2*DIMENSION);
         self.top_left_y = y;
         self.top_right_x = x;
-        self.top_right_y = y + 100;
+        self.top_right_y = y + DIMENSION;
     }
 
     fn handle_events(&mut self, event: &Event) {

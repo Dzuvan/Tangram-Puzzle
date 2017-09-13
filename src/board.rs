@@ -2,14 +2,10 @@
 
 extern crate sdl2;
 
-use std::process;
-
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::pixels::Color;
 use sdl2::video::Window;
-use sdl2::event::Event;
-use sdl2::mouse::MouseButton;
 use ::sdl2::messagebox::*;
 
 use shapes::*;
@@ -73,7 +69,7 @@ impl Board {
                 f.shuffle();
                 l.shuffle();
                 r.shuffle();
-           }
-           }
+            }
         }
+    }
 }

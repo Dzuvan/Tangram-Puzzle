@@ -109,15 +109,6 @@ fn main() {
             r.handle_events(&event);
 
         for solution  in &solutions {
-            println!("Solution: {},{},{},{},{},{},{}",
-             s.check_win(&solution[0]),
-            u.check_win(&solution[1]),
-            i.check_win(&solution[2]),
-            g.check_win(&solution[3]),
-            f.check_win(&solution[4]),
-            l.check_win(&solution[5]),
-            r.check_win(&solution[6]));
-
             if s.check_win(&solution[0])&&
             u.check_win(&solution[1])&&
             i.check_win(&solution[2])&&
@@ -135,7 +126,9 @@ fn main() {
         canvas.clear();
         canvas.copy(&texture, None, Some(target)).unwrap();
         canvas.copy(&help_texture, None, Some(help_target)).unwrap();
+
         board.draw_grid(&mut canvas, Color::RGB(255, 0, 0));
+
         s.draw(&mut canvas,Color::RGB(255, 0, 255));
         u.draw(&mut canvas,Color::RGB(0, 0, 255));
         i.draw(&mut canvas,Color::RGB(0, 255, 0));
@@ -143,6 +136,7 @@ fn main() {
         f.draw(&mut canvas,Color::RGB(0, 255, 255));
         l.draw(&mut canvas,Color::RGB(100, 255, 255));
         r.draw(&mut canvas,Color::RGB(100, 0, 255));
+
         canvas.present();
     }
 }
