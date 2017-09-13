@@ -336,7 +336,7 @@ impl  Piece for IShape {
 
     fn reposition(&mut self, x: i32, y: i32) {
         self.top_x = x;
-        self.top_y = y + DIMENSION;
+        self.top_y = y - DIMENSION;
     }
 
     fn handle_events(&mut self, event: &Event) {
