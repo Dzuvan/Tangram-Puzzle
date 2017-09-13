@@ -6,6 +6,7 @@ extern crate rand;
 extern crate sdl2;
 
 use std::process;
+use std::path::Path;
 
 use rand::Rng;
 
@@ -18,9 +19,14 @@ use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 
 use constants::*;
+use audio::*;
 
 // Interfejs koji implementiraju strukture koje predstavljaju delove slagalice.
 pub trait Piece {
+    fn play_sound(&self) {
+        let path = Path::new("./assets/click-sound.wav");
+        play(path, 100);
+    }
     fn new(x:i32, y: i32)->Self where Self:Sized;
     fn draw(&self, canvas: &mut Canvas<Window>, color: Color) where Self:Sized;
     fn intersects(&self, object_x: i32, object_y: i32,dimensions: i32, mouse_x: i32, mouse_y: i32)->bool where Self:Sized{
@@ -150,6 +156,7 @@ impl Piece for  SShape {
                             let x = self.bottom_left_x;
                             let y = self.bottom_left_y;
                             self.reposition(x, y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                         }
                 }
@@ -256,6 +263,7 @@ impl  Piece for UShape {
                             let x = self.left_x;
                             let y = self.left_y;
                             self.reposition(x, y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                     }
                 }
@@ -363,6 +371,7 @@ impl  Piece for IShape {
                             let x = self.left_x;
                             let y = self.left_y;
                             self.reposition(x, y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                     }
                 }
@@ -493,6 +502,7 @@ impl Piece for GShape {
                             let x = self.bottom_left_x;
                             let y = self.bottom_left_y;
                             self.reposition(x, y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                     }
                 }
@@ -638,6 +648,7 @@ impl Piece for FShape {
                             let x = self.bottom_left_x;
                             let y = self.bottom_left_y;
                             self.reposition(x,y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                         }
                 }
@@ -771,6 +782,7 @@ impl Piece for LShape {
                             let x = self.bottom_left_x;
                             let y = self.bottom_left_y;
                             self.reposition(x,y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                         }
                 }
@@ -903,6 +915,7 @@ impl  Piece for RShape {
                             let x = self.bottom_left_x;
                             let y = self.bottom_left_y;
                             self.reposition(x, y);
+                            self.play_sound();
                             self.check_win(&[x, y]);
                         }
                 }

@@ -2,45 +2,27 @@ extern crate sdl2;
 extern crate rand;
 
 use std::path::Path;
-use std::borrow::Cow;
+use std::time::Duration;
+use std::thread;
 
 pub mod shapes;
 pub mod constants;
 pub mod board;
+pub mod audio;
 
 use sdl2::pixels::Color;
 use sdl2::video::Window;
-use sdl2::audio::{ AudioCallback, AudioSpecDesired,AudioSpecWAV,AudioCVT };
 use sdl2::render::Canvas;
 use sdl2::rect::Rect;
-use sdl2::AudioSubsystem;
 
 use constants::*;
 use shapes::*;
 use board::*;
+use audio::*;
 
-struct Sound {
-    data: Vec<u8>,
-    volume: f32,
-    pos: usize,
-}
-
-impl AudioCallback for Sound {
-    type Channel = u8;
-
-    fn callback(&mut self, out: &mut [u8]) {
-        for dst in out.iter_mut() {
-            *dst = (*self.data.get(self.pos).unwrap_or(&0) as f32 * self.volume) as u8;
-            self.pos += 1;
-        }
-    }
-}
-
-
-fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump, AudioSubsystem) {
+fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump) {
     let sdl_context = sdl2::init ().ok ().expect ("Could not initialize SDL2");
     let video_subsystem  = sdl_context.video ().ok ().expect ("Could not init video_subsystem");
-    let audio_subsystem = sdl_context.audio().unwrap();
 
     let window = video_subsystem.window ("Puzle", WIDTH, HEIGHT)
         .position_centered ()
@@ -54,11 +36,11 @@ fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump, AudioSubsystem) {
         .unwrap ();
 
     let event_pump = sdl_context.event_pump ().unwrap ();
-    (canvas, event_pump, audio_subsystem)
+    (canvas, event_pump)
 }
 
 fn main() {
-    let (mut canvas, mut event_pump, audio_subsystem) = init_sdl ();
+    let (mut canvas, mut event_pump) = init_sdl ();
 
     let ttf_context = sdl2::ttf::init().unwrap();
     let mut font = ttf_context.load_font(Path::new("assets/font.ttf"), 32).unwrap();
@@ -73,32 +55,8 @@ fn main() {
     let help_texture = texture_creator.create_texture_from_surface(&help).unwrap();
     let help_target = Rect::new(DIMENSION as i32, 6 * DIMENSION as i32, WIDTH / 2, HEIGHT / 12);
 
-    let wav_file : Cow<'static, Path> = Cow::from(Path::new("assets/captcha.wav"));
-    let desired_spec = AudioSpecDesired {
-        freq: Some(44100),
-        channels: Some(1), // mono
-        samples: None      // default
-    };
-    let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
-        let wav = AudioSpecWAV::load_wav(wav_file)
-            .expect("Could not load WAV file");
-
-        let cvt = AudioCVT::new(
-                wav.format, wav.channels, wav.freq,
-                spec.format, spec.channels, spec.freq)
-            .expect("Could not convert WAV file");
-
-        let data = cvt.convert(wav.buffer().to_vec());
-
-        // initialize the audio callback
-        Sound {
-            data: data,
-            volume: 0.25,
-            pos: 0,
-        }
-    }).unwrap();
-
     let board = Board::new();
+    let audio_file = Path::new("./assets/Black-Light-Sound-Dark-Clouds-Covering-The-Horizon.mp3");
 
     let mut s = SShape::new(400, 400);
     let mut u = UShape::new(400, 500);
@@ -199,7 +157,7 @@ fn main() {
             l.check_win(&solution[5])&&
             r.check_win(&solution[6]){
               // Start playback
-              device.resume();
+              play(audio_file, 2000);
               board.end_screen(&mut s,&mut u,&mut i,&mut g,&mut f,&mut l,&mut r);
             }
         }

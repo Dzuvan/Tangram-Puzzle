@@ -23,7 +23,6 @@ impl Board {
             y: MATRIX_SIZE,
         }
     }
-
     pub fn draw_grid(&self, canvas:&mut Canvas<Window>, color: Color) {
         canvas.set_draw_color(color);
 
