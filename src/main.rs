@@ -1,13 +1,16 @@
 extern crate sdl2;
 extern crate rand;
 
+use std::path::Path;
+
 pub mod shapes;
 pub mod constants;
 pub mod board;
 
 use sdl2::pixels::Color;
 use sdl2::video::Window;
-use sdl2::render::Canvas;
+use sdl2::render::{ Canvas, TextureQuery };
+use sdl2::rect::Rect;
 
 use constants::*;
 use shapes::*;
@@ -23,19 +26,28 @@ fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump) {
         .build ()
         .unwrap ();
 
-    let canvas = window.into_canvas ()
+    let  canvas = window.into_canvas ()
         .present_vsync ()
         .build ()
         .unwrap ();
 
     let event_pump = sdl_context.event_pump ().unwrap ();
-
     (canvas, event_pump)
 }
 
 fn main() {
     let (mut canvas, mut event_pump) = init_sdl ();
 
+    let ttf_context = sdl2::ttf::init().unwrap();
+    let mut font = ttf_context.load_font(Path::new("assets/font.ttf"), 128).unwrap();
+    let texture_creator = canvas.texture_creator();
+    let surface = font.render("Hello Rust!") .blended(Color::RGBA(255, 255, 255, 1)).unwrap();
+    let texture = texture_creator.create_texture_from_surface(&surface).unwrap();
+    let TextureQuery { width, height, .. } = texture.query();
+
+    font.set_style(sdl2::ttf::STYLE_BOLD);
+    let padding = 64;
+    let target = get_centered_rect(width, height, WIDTH - padding, HEIGHT - padding);
 
     let board = Board::new();
 
@@ -245,6 +257,7 @@ fn main() {
         // Boja pozadine.
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
+        canvas.copy(&texture, None, Some(target)).unwrap();
         board.draw_grid(&mut canvas, Color::RGB(255, 0, 0));
         s.draw(&mut canvas,Color::RGB(255, 0, 255));
         u.draw(&mut canvas,Color::RGB(0, 0, 255));
@@ -255,5 +268,28 @@ fn main() {
         r.draw(&mut canvas,Color::RGB(100, 0, 255));
         canvas.present();
     }
+}
+
+fn get_centered_rect(rect_width: u32, rect_height: u32, cons_width: u32, cons_height: u32) -> Rect {
+    let wr = rect_width as f32 / cons_width as f32;
+    let hr = rect_height as f32 / cons_height as f32;
+
+    let (w, h) = if wr > 1f32 || hr > 1f32 {
+        if wr > hr {
+            println!("Scaling down! The text will look worse!");
+            let h = (rect_height as f32 / wr) as i32;
+            (cons_width as i32, h)
+        } else {
+            println!("Scaling down! The text will look worse!");
+            let w = (rect_width as f32 / hr) as i32;
+            (w, cons_height as i32)
+        }
+    } else {
+        (rect_width as i32, rect_height as i32)
+    };
+    let cx = (WIDTH as i32 - w) / 2;
+    let cy = (HEIGHT as i32 - h) / 2;
+
+    Rect::new(cx, cy, w as u32, h as u32)
 }
 
