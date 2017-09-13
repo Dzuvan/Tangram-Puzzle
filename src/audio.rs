@@ -27,7 +27,7 @@ pub fn play(music_file: &Path, time: i32) {
 
     {
         let n = sdl2::mixer::get_chunk_decoders_number();
-        println!("available chunk(sample) decoders: {}", n);
+        //println!("available chunk(sample) decoders: {}", n);
         for i in 0..n {
             println!("  decoder {} => {}", i, sdl2::mixer::get_chunk_decoder(i));
         }
@@ -35,7 +35,7 @@ pub fn play(music_file: &Path, time: i32) {
 
     {
         let n = sdl2::mixer::get_music_decoders_number();
-        println!("available music decoders: {}", n);
+        //println!("available music decoders: {}", n);
         for i in 0..n {
             println!("  decoder {} => {}", i, sdl2::mixer::get_music_decoder(i));
         }
@@ -46,7 +46,7 @@ pub fn play(music_file: &Path, time: i32) {
     let music = sdl2::mixer::Music::from_file(music_file).unwrap();
 
     fn hook_finished() {
-        println!("play ends! from rust cb");
+       // println!("play ends! from rust cb");
     }
 
     sdl2::mixer::Music::hook_finished(hook_finished);

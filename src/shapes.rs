@@ -10,7 +10,7 @@ use std::path::Path;
 
 use rand::Rng;
 
-use sdl2::pixels::Color;
+use sdl2::pixels::{ Color, PixelFormatEnum };
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use sdl2::event::Event;
@@ -28,8 +28,23 @@ pub trait Piece {
         play(path, 100);
     }
     fn new(x:i32, y: i32)->Self where Self:Sized;
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) where Self:Sized;
-    fn intersects(&self, object_x: i32, object_y: i32,dimensions: i32, mouse_x: i32, mouse_y: i32)->bool where Self:Sized{
+
+    fn compare_color(&self,canvas: &Canvas<Window>, x: i32, y:i32,color: &Color)-> bool {
+        let reading_rect = Rect::new(x,y,1,1);
+        let result = canvas.read_pixels(reading_rect, PixelFormatEnum::RGB24);
+        println!("{:?}", result);
+        match result {
+                Ok(colors) => {
+                        if colors[0]  == color.r && colors[1] == color.g && colors[2] == color.b{
+                            return true;
+                        }
+                    },
+                Err(_) => {return false;}
+                }
+        false
+        }
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color);
+    fn intersects(&self, object_x: i32, object_y: i32,dimensions: i32, mouse_x: i32, mouse_y: i32)->bool{
         if mouse_x < object_x || mouse_y < object_y {
             return false;
         }
@@ -39,13 +54,14 @@ pub trait Piece {
         true
     }
     fn stop_drag(&mut self);
-    fn handle_events(&mut self, &Event);
+    fn handle_events(&mut self, &Event, &Canvas<Window>);
     fn reposition(&mut self, i32, i32);
     fn shuffle(&mut self);
     fn check_win(&self, &[i32;2])->bool;
 }
 pub struct SShape {
     pub is_dragging: bool,
+    pub color: Color,
 
     pub offset_x: i32,
     pub offset_y: i32,
@@ -94,6 +110,7 @@ impl Piece for  SShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color: Color::RGB(0, 0, 0),
             bottom_left_x: bottom_left_x,
             bottom_left_y: bottom_left_y,
             bottom_right_x: bottom_right_x,
@@ -111,7 +128,8 @@ impl Piece for  SShape {
         self.offset_y = 0;
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
+        self.color = color;
         let left_bottom = Rect::new(self.bottom_left_x,self.bottom_left_y, DIMENSION as u32 , DIMENSION as u32 );
         let right_bottom = Rect::new(self.bottom_right_x, self.bottom_right_y, DIMENSION as u32, DIMENSION as u32);
         let top_left = Rect::new(self.top_left_x ,self.top_left_y, DIMENSION as u32, DIMENSION as u32);
@@ -130,8 +148,7 @@ impl Piece for  SShape {
         self.top_right_x = x + DIMENSION;
         self.top_right_y = y - DIMENSION;
     }
-
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
@@ -140,7 +157,9 @@ impl Piece for  SShape {
                 if mouse_btn == MouseButton::Left && self.intersects(self.bottom_left_x, self.bottom_left_y, DIMENSION,x, y)
                                                 || self.intersects(self.bottom_right_x, self.bottom_right_y, DIMENSION, x, y)
                                                 ||self.intersects(self.top_left_x, self.top_left_y, DIMENSION, x, y)
-                                                ||self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y) {
+                                                ||self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y)
+                                                && self.compare_color(&canvas, x, y, &self.color){
+                       println!("SShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                             self.offset_x = x - self.bottom_left_x;
                             self.offset_y = y - self.bottom_left_y;
                             self.is_dragging = true;
@@ -182,6 +201,7 @@ pub struct UShape {
     pub is_dragging: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub color: Color,
 
     pub left_x: i32,
     pub left_y: i32,
@@ -211,6 +231,7 @@ impl  Piece for UShape {
 
         UShape {
             is_dragging: false,
+            color:Color::RGB(0,0,0),
             offset_x: 0,
             offset_y: 0,
             left_x: left_x,
@@ -220,7 +241,7 @@ impl  Piece for UShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let left = Rect::new(self.left_x,self.left_y, DIMENSION as u32 , DIMENSION as u32 );
         let right= Rect::new(self.right_x, self.right_y, DIMENSION as u32, DIMENSION as u32);
         let rects =[left, right];
@@ -240,14 +261,16 @@ impl  Piece for UShape {
             self.right_y = y;
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
             },
             Event::MouseButtonDown{x,y, mouse_btn, ..} => {
                 if mouse_btn == MouseButton::Left && self.intersects(self.left_x,self.left_y, DIMENSION, x, y)
-                                                    || self.intersects(self.right_x,self.right_y, DIMENSION, x, y) {
+                                                    || self.intersects(self.right_x,self.right_y, DIMENSION, x, y)
+                                                    && self.compare_color(&canvas, x, y, &self.color){
+                       println!("UShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                         self.offset_x = x - self.left_x;
                         self.offset_y = y - self.left_y;
                         self.is_dragging = true;
@@ -288,6 +311,7 @@ pub struct IShape {
     pub is_dragging: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub color: Color,
 
     pub left_x: i32,
     pub left_y: i32,
@@ -320,6 +344,7 @@ impl  Piece for IShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color:Color::RGB(0,0,0),
             left_x: left_x,
             left_y: left_y,
             top_x: top_x,
@@ -327,7 +352,7 @@ impl  Piece for IShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let left = Rect::new(self.left_x, self.left_y, DIMENSION as u32 , DIMENSION as u32 );
         let right = Rect::new(self.top_x, self.top_y, DIMENSION as u32, DIMENSION as u32);
         let rects = [left, right];
@@ -347,14 +372,16 @@ impl  Piece for IShape {
         self.top_y = y - DIMENSION;
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
             },
             Event::MouseButtonDown{x,y, mouse_btn, ..} => {
                 if mouse_btn == MouseButton::Left && self.intersects(self.left_x,self.left_y, DIMENSION,x, y)
-                                                    || self.intersects(self.top_x, self.top_y, DIMENSION,x, y) {
+                                                    || self.intersects(self.top_x, self.top_y, DIMENSION,x, y)
+                                                    && self.compare_color(&canvas, x, y, &self.color){
+                       println!("IShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                         self.offset_x = x - self.left_x;
                         self.offset_y = y - self.left_y;
                         self.is_dragging = true;
@@ -397,6 +424,7 @@ pub struct GShape {
     pub is_dragging: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub color: Color,
 
     pub bottom_left_x: i32,
     pub bottom_left_y: i32,
@@ -439,6 +467,7 @@ impl Piece for GShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color:Color::RGB(0,0,0),
             bottom_left_x: bottom_left_x,
             bottom_left_y: bottom_left_y,
             bottom_right_x: bottom_right_x,
@@ -450,7 +479,7 @@ impl Piece for GShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let l_b = Rect::new(self.bottom_left_x,self.bottom_left_y, DIMENSION as u32 , DIMENSION as u32 );
         let l_t = Rect::new(self.bottom_right_x, self.bottom_right_y, DIMENSION as u32, DIMENSION as u32);
         let r_b = Rect::new(self.top_left_x ,self.top_left_y, DIMENSION as u32, DIMENSION as u32);
@@ -476,7 +505,7 @@ impl Piece for GShape {
             self.top_right_y = y - (2*DIMENSION);
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
@@ -485,7 +514,9 @@ impl Piece for GShape {
                 if mouse_btn == MouseButton::Left && self.intersects(self.bottom_left_x,self.bottom_left_y, DIMENSION,x, y)
                                                     || self.intersects(self.bottom_right_x, self.bottom_right_y, DIMENSION, x, y)
                                                     || self.intersects(self.top_left_x, self.top_left_y, DIMENSION, x, y)
-                                                    || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y) {
+                                                    || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y)
+                                                    && self.compare_color(&canvas, x, y, &self.color){
+                       println!("GShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                             self.offset_x = x - self.bottom_left_x;
                             self.offset_y = y - self.bottom_left_y;
                             self.is_dragging = true;
@@ -496,7 +527,7 @@ impl Piece for GShape {
                 if mouse_btn == MouseButton::Left && self.is_dragging {
                     self.stop_drag();
                     if  self.bottom_left_x + DIMENSION > DIMENSION  && self.bottom_left_y-300 < DIMENSION * (MATRIX_SIZE+1) &&
-                        self.top_right_x + DIMENSION > DIMENSION && self.top_right_y < DIMENSION * (MATRIX_SIZE+1) {
+                        self.top_right_x + DIMENSION < DIMENSION * (MATRIX_SIZE+1) && self.top_right_y < DIMENSION * (MATRIX_SIZE+1) {
                             self.bottom_left_x = (self.bottom_left_x / DIMENSION) * DIMENSION;
                             self.bottom_left_y = (self.bottom_left_y / DIMENSION) * DIMENSION;
                             let x = self.bottom_left_x;
@@ -528,6 +559,7 @@ pub struct FShape {
     is_dragging: bool,
     offset_x: i32,
     offset_y: i32,
+    pub color: Color,
 
     pub bottom_left_x: i32,
     pub bottom_left_y: i32,
@@ -579,6 +611,7 @@ impl Piece for FShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color:Color::RGB(0,0,0),
             bottom_left_x: bottom_left_x,
             bottom_left_y: bottom_left_y,
             bottom_right_x: bottom_right_x,
@@ -592,7 +625,7 @@ impl Piece for FShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let l_b = Rect::new(self.bottom_left_x,self.bottom_left_y, DIMENSION as u32 , DIMENSION as u32 );
         let l_t = Rect::new(self.bottom_right_x, self.bottom_right_y, DIMENSION as u32, DIMENSION as u32);
         let r_b = Rect::new(self.top_left_x ,self.top_left_y, DIMENSION as u32, DIMENSION as u32);
@@ -621,7 +654,7 @@ impl Piece for FShape {
         self.top_top_left_y = y - (2*DIMENSION);
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
@@ -631,7 +664,9 @@ impl Piece for FShape {
                                                 || self.intersects(self.bottom_right_x, self.bottom_right_y, DIMENSION, x, y)
                                                 || self.intersects(self.top_left_x, self.top_left_y, DIMENSION, x, y)
                                                 || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y)
-                                                || self.intersects(self.top_top_left_x, self.top_top_left_y, DIMENSION, x, y){
+                                                || self.intersects(self.top_top_left_x, self.top_top_left_y, DIMENSION, x, y)
+                                                && self.compare_color(&canvas, x, y, &self.color){
+                       println!("FShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                             self.offset_x = x - self.bottom_left_x;
                             self.offset_y = y - self.bottom_left_y;
                             self.is_dragging = true;
@@ -674,6 +709,7 @@ pub struct LShape {
     pub is_dragging: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub color: Color,
 
     pub bottom_left_x: i32,
     pub bottom_left_y: i32,
@@ -718,6 +754,7 @@ impl Piece for LShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color:Color::RGB(0, 0, 0),
             bottom_left_x: bottom_left_x,
             bottom_left_y: bottom_left_y,
             bottom_right_x: bottom_right_x,
@@ -729,7 +766,7 @@ impl Piece for LShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let l_b = Rect::new(self.bottom_left_x,self.bottom_left_y, DIMENSION as u32 , DIMENSION as u32 );
         let l_t = Rect::new(self.bottom_right_x, self.bottom_right_y, DIMENSION as u32, DIMENSION as u32);
         let r_b = Rect::new(self.top_left_x ,self.top_left_y, DIMENSION as u32, DIMENSION as u32);
@@ -757,7 +794,7 @@ impl Piece for LShape {
         self.top_right_y = y - DIMENSION;
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
@@ -766,7 +803,9 @@ impl Piece for LShape {
                 if mouse_btn == MouseButton::Left && self.intersects(self.bottom_left_x,self.bottom_left_y, DIMENSION,x, y)
                                                 || self.intersects(self.bottom_right_x, self.bottom_right_y, DIMENSION, x, y)
                                                 || self.intersects(self.top_left_x, self.top_left_y, DIMENSION, x, y)
-                                                || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y){
+                                                || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y)
+                                                && self.compare_color(&canvas, x, y, &self.color){
+                       println!("LShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                         self.offset_x = x - self.bottom_left_x;
                         self.offset_y = y - self.bottom_left_y;
                         self.is_dragging = true;
@@ -808,6 +847,7 @@ pub struct RShape {
     pub is_dragging: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub color: Color,
 
     pub bottom_left_x: i32,
     pub bottom_left_y: i32,
@@ -852,6 +892,7 @@ impl  Piece for RShape {
             is_dragging: false,
             offset_x: 0,
             offset_y: 0,
+            color: Color::RGB(0, 0, 0),
             bottom_left_x: bottom_left_x,
             bottom_left_y: bottom_left_y,
             bottom_right_x: bottom_right_x,
@@ -863,7 +904,7 @@ impl  Piece for RShape {
         }
     }
 
-    fn draw(&self, canvas: &mut Canvas<Window>, color: Color) {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, color: Color) {
         let l_b = Rect::new(self.bottom_left_x,self.bottom_left_y, DIMENSION as u32 , DIMENSION as u32 );
         let l_t = Rect::new(self.bottom_right_x, self.bottom_right_y, DIMENSION as u32, DIMENSION as u32);
         let r_b = Rect::new(self.top_left_x ,self.top_left_y, DIMENSION as u32, DIMENSION as u32);
@@ -889,7 +930,7 @@ impl  Piece for RShape {
         self.top_right_y = y + DIMENSION;
     }
 
-    fn handle_events(&mut self, event: &Event) {
+    fn handle_events(&mut self, event: &Event, canvas: &Canvas<Window>) {
         match *event {
             Event::Quit {..}| Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 process::exit (0x0f00);
@@ -898,7 +939,9 @@ impl  Piece for RShape {
                 if mouse_btn == MouseButton::Left && self.intersects(self.bottom_left_x,self.bottom_left_y, DIMENSION,x, y)
                                                 || self.intersects(self.bottom_right_x, self.bottom_right_y, DIMENSION, x, y)
                                                 || self.intersects(self.top_left_x, self.top_left_y, DIMENSION, x, y)
-                                                || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y){
+                                                || self.intersects(self.top_right_x, self.top_right_y, DIMENSION, x, y)
+                                                && self.compare_color(&canvas, x, y, &self.color){
+                       println!("RShape{}",self.compare_color(&canvas, x, y, &self.color)) ;
                             self.offset_x = x - self.bottom_left_x;
                             self.offset_y = y - self.bottom_left_y;
                             self.is_dragging = true;
@@ -936,3 +979,4 @@ impl  Piece for RShape {
         }
     }
 }
+

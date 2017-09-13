@@ -140,13 +140,13 @@ fn main() {
     loop {
 
         for event in event_pump.poll_iter() {
-            s.handle_events(&event);
-            u.handle_events(&event);
-            i.handle_events(&event);
-            g.handle_events(&event);
-            f.handle_events(&event);
-            l.handle_events(&event);
-            r.handle_events(&event);
+            s.handle_events(&event, &canvas);
+            u.handle_events(&event, &canvas);
+            i.handle_events(&event, &canvas);
+            g.handle_events(&event, &canvas);
+            f.handle_events(&event, &canvas);
+            l.handle_events(&event, &canvas);
+            r.handle_events(&event, &canvas);
 
     for solution in &solutions {
             if s.check_win(&solution[0])&&
