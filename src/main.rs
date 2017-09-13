@@ -2,6 +2,8 @@ extern crate sdl2;
 extern crate rand;
 
 use std::path::Path;
+use std::time::Duration;
+use std::borrow::Cow;
 
 pub mod shapes;
 pub mod constants;
@@ -9,18 +11,22 @@ pub mod board;
 
 use sdl2::pixels::Color;
 use sdl2::video::Window;
+use sdl2::audio::{ AudioDevice, AudioCallback, AudioSpecDesired,AudioSpecWAV,AudioCVT };
 use sdl2::render::{ Canvas, TextureQuery };
 use sdl2::rect::Rect;
+use sdl2::AudioSubsystem;
 
 use constants::*;
 use shapes::*;
 use board::*;
 
-fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump) {
+fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump, AudioSubsystem) {
     let sdl_context = sdl2::init ().ok ().expect ("Could not initialize SDL2");
     let video_subsystem  = sdl_context.video ().ok ().expect ("Could not init video_subsystem");
+    let audio_subsystem = sdl_context.audio().unwrap();
 
-    let window = video_subsystem.window ("Game", WIDTH, HEIGHT)
+
+    let window = video_subsystem.window ("Puzle", WIDTH, HEIGHT)
         .position_centered ()
         .opengl ()
         .build ()
@@ -32,11 +38,11 @@ fn init_sdl() ->  (Canvas<Window>, sdl2::EventPump) {
         .unwrap ();
 
     let event_pump = sdl_context.event_pump ().unwrap ();
-    (canvas, event_pump)
+    (canvas, event_pump, audio_subsystem)
 }
 
 fn main() {
-    let (mut canvas, mut event_pump) = init_sdl ();
+    let (mut canvas, mut event_pump, audio_subsystem) = init_sdl ();
 
     let ttf_context = sdl2::ttf::init().unwrap();
     let mut font = ttf_context.load_font(Path::new("assets/font.ttf"), 32).unwrap();
@@ -52,6 +58,31 @@ fn main() {
     let help = font.render("Help:\nPress R to restart.\nPress ESC to exit.") .blended(Color::RGBA(255, 255, 255, 1)).unwrap();
     let help_texture = texture_creator.create_texture_from_surface(&help).unwrap();
     let help_target = Rect::new(DIMENSION as i32, 6 * DIMENSION as i32, WIDTH / 2, HEIGHT / 12);
+
+    let wav_file : Cow<'static, Path> = Cow::from(Path::new("assets/captcha.wav"));
+    let desired_spec = AudioSpecDesired {
+        freq: Some(44100),
+        channels: Some(1), // mono
+        samples: None      // default
+    };
+    let device = audio_subsystem.open_playback(None, &desired_spec, |spec| {
+        let wav = AudioSpecWAV::load_wav(wav_file)
+            .expect("Could not load test WAV file");
+
+        let cvt = AudioCVT::new(
+                wav.format, wav.channels, wav.freq,
+                spec.format, spec.channels, spec.freq)
+            .expect("Could not convert WAV file");
+
+        let data = cvt.convert(wav.buffer().to_vec());
+
+        // initialize the audio callback
+        Sound {
+            data: data,
+            volume: 0.25,
+            pos: 0,
+        }
+    }).unwrap();
 
     let board = Board::new();
 
@@ -109,6 +140,7 @@ fn main() {
             r.handle_events(&event);
 
         for solution  in &solutions {
+
             if s.check_win(&solution[0])&&
             u.check_win(&solution[1])&&
             i.check_win(&solution[2])&&
@@ -116,6 +148,8 @@ fn main() {
             f.check_win(&solution[4])&&
             l.check_win(&solution[5])&&
             r.check_win(&solution[6]){
+                // Start playback
+                device.resume();
               board.end_screen(&mut s,&mut u,&mut i,&mut g,&mut f,&mut l,&mut r);
             }
 
@@ -138,6 +172,23 @@ fn main() {
         r.draw(&mut canvas,Color::RGB(100, 0, 255));
 
         canvas.present();
+    }
+}
+
+struct Sound {
+    data: Vec<u8>,
+    volume: f32,
+    pos: usize,
+}
+
+impl AudioCallback for Sound {
+    type Channel = u8;
+
+    fn callback(&mut self, out: &mut [u8]) {
+        for dst in out.iter_mut() {
+            *dst = (*self.data.get(self.pos).unwrap_or(&0) as f32 * self.volume) as u8;
+            self.pos += 1;
+        }
     }
 }
 
